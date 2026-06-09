@@ -2,7 +2,7 @@ const path = require("path");
 const Module = require("module");
 
 const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, "../..");
+const workspaceRoot = projectRoot;
 const mobileNodeModules = path.resolve(projectRoot, "node_modules");
 
 process.env.EXPO_ROUTER_APP_ROOT = path.resolve(projectRoot, "app");
