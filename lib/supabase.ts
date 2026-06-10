@@ -1,15 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
 import * as SecureStore from 'expo-secure-store'
+import { Platform } from 'react-native'
 
 const supabaseUrl  = process.env.EXPO_PUBLIC_SUPABASE_URL  ?? ''
 const supabaseKey  = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? ''
 const hasSupabaseConfig = !!supabaseUrl && supabaseUrl.startsWith('https://') && !!supabaseKey
 
-// Use SecureStore for auth token persistence on device
+// SecureStore has no native module on web, so fall back to localStorage there
 const ExpoSecureStoreAdapter = {
-  getItem:    (key: string) => SecureStore.getItemAsync(key),
-  setItem:    (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+  getItem: (key: string) => {
+    if (Platform.OS === 'web') return Promise.resolve(globalThis.localStorage?.getItem(key) ?? null)
+    return SecureStore.getItemAsync(key)
+  },
+  setItem: (key: string, value: string) => {
+    if (Platform.OS === 'web') return Promise.resolve(globalThis.localStorage?.setItem(key, value))
+    return SecureStore.setItemAsync(key, value)
+  },
+  removeItem: (key: string) => {
+    if (Platform.OS === 'web') return Promise.resolve(globalThis.localStorage?.removeItem(key))
+    return SecureStore.deleteItemAsync(key)
+  },
 }
 
 const missingSupabase = () => {
