@@ -13,7 +13,7 @@ import {
 } from 'lucide-react-native'
 import { UncertaintyBadge } from '../components/UncertaintyBadge'
 import { Skeleton } from '../components/Skeleton'
-import { isSupabaseReady, supabase } from '../lib/supabase'
+import { insertScan } from '../lib/localDb'
 import { C } from '../lib/colors'
 import type { InferenceResult } from '../lib/inference'
 import { deriveStage, urgencyToText, type TreatmentPriority } from '../lib/clinical'
@@ -181,18 +181,16 @@ export default function ResultScreen() {
 
   async function saveToRecords() {
     if (!result) return
-    if (!isSupabaseReady()) {
-      Alert.alert('Not configured', 'Add Supabase credentials to .env to save records.')
-      return
-    }
     setSaving(true)
     try {
-      await supabase.from('scans').insert({
+      await insertScan({
+        id: result.analysis_id,
         predicted_class: result.predicted_class, confidence: result.confidence,
         uncertainty_score: result.uncertainty_score, uncertainty_level: result.uncertainty_level,
         all_probabilities: result.all_probabilities, referral_flag: result.referral_flag,
         eye_side: params.eye || 'unknown', status: 'pending',
         analysis_metadata: { analysis_id: result.analysis_id, processing_time_ms: result.processing_time_ms, concepts: result.activated_concepts, reasons: result.supporting_reasons },
+        created_at: new Date().toISOString(),
       })
       setSaved(true)
     } catch (e) { console.error(e) }

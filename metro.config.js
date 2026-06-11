@@ -13,7 +13,7 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(projectRoot);
 
-config.maxWorkers = Number(process.env.EXPO_METRO_MAX_WORKERS || 1);
+config.maxWorkers = Number(process.env.EXPO_METRO_MAX_WORKERS || 4);
 config.transformer.unstable_allowRequireContext = true;
 config.watchFolders = [workspaceRoot];
 config.resolver.disableHierarchicalLookup = true;
