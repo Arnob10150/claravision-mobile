@@ -29,7 +29,7 @@
     "expo-splash-screen": "~31.0.13",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
-    "lucide-react-native": "^0.468.0",
+    "lucide-react-native": "^1.17.0",
     "metro": "^0.83.1",
     "metro-babel-transformer": "^0.83.1",
     "metro-cache": "^0.83.1",
