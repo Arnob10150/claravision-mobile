@@ -13,10 +13,14 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(projectRoot);
 
-config.maxWorkers = Number(process.env.EXPO_METRO_MAX_WORKERS || 4);
+config.maxWorkers = Number(process.env.EXPO_METRO_MAX_WORKERS || 6);
 config.transformer.unstable_allowRequireContext = true;
 config.watchFolders = [workspaceRoot];
 config.resolver.disableHierarchicalLookup = true;
+config.resolver.blockList = [
+  /\/server\/.*/,
+  /\/\.git\/.*/,
+];
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(workspaceRoot, "node_modules")
