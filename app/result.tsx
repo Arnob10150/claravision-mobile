@@ -150,7 +150,7 @@ Date: ${new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', ye
 
 /* ── Main Result screen ─────────────────────────────────────────────────────── */
 export default function ResultScreen() {
-  const params = useLocalSearchParams<{ result?: string; imageUri?: string; id?: string }>()
+  const params = useLocalSearchParams<{ result?: string; imageUri?: string; id?: string; eye?: string }>()
   const [result, setResult]       = useState<InferenceResult | null>(null)
   const [imageUri, setImageUri]   = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'probs'|'evidence'|'diff'|'uncertainty'|'clinical'>('probs')
@@ -191,7 +191,7 @@ export default function ResultScreen() {
         predicted_class: result.predicted_class, confidence: result.confidence,
         uncertainty_score: result.uncertainty_score, uncertainty_level: result.uncertainty_level,
         all_probabilities: result.all_probabilities, referral_flag: result.referral_flag,
-        eye_side: 'unknown', status: 'pending',
+        eye_side: params.eye || 'unknown', status: 'pending',
         analysis_metadata: { analysis_id: result.analysis_id, processing_time_ms: result.processing_time_ms, concepts: result.activated_concepts, reasons: result.supporting_reasons },
       })
       setSaved(true)

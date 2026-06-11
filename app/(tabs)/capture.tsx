@@ -64,7 +64,7 @@ export default function CaptureScreen() {
     setError(null)
     try {
       const result = await analyzeImageUri(imageUri)
-      router.push({ pathname: '/result', params: { result: JSON.stringify(result), imageUri } } as any)
+      router.push({ pathname: '/result', params: { result: JSON.stringify(result), imageUri, eye } } as any)
     } catch (e) {
       console.error(e)
       setError(e instanceof Error ? e.message : 'Analysis failed. Check the inference server and try again.')
