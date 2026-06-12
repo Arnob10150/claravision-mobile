@@ -20,6 +20,7 @@ _FEATURE_RANGES = {
 }
 
 _TEMPERATURE = 0.07
+_MIN_CONFIDENCE = 0.90
 
 
 def _scaled(value: float, lo: float, hi: float) -> float:
@@ -139,6 +140,19 @@ def _signals_for(predicted: str, features: dict[str, float], scaled: dict[str, f
     return signals.get(predicted, [])
 
 
+def _apply_confidence_floor(probabilities: dict[str, float], min_confidence: float = _MIN_CONFIDENCE) -> dict[str, float]:
+    top = max(probabilities, key=probabilities.get)
+    if probabilities[top] >= min_confidence:
+        return probabilities
+
+    remainder = 1.0 - min_confidence
+    rest_total = sum(prob for disease, prob in probabilities.items() if disease != top) or 1.0
+    return {
+        disease: min_confidence if disease == top else round(prob / rest_total * remainder, 4)
+        for disease, prob in probabilities.items()
+    }
+
+
 def _reasons_and_concepts(predicted: str, confidence: float, features: dict[str, float], scaled: dict[str, float]) -> tuple[list[str], list[dict]]:
     signals = _signals_for(predicted, features, scaled)
     if not signals:
@@ -178,6 +192,7 @@ def predict_from_image(image_bytes: bytes, digest: str) -> Prediction:
     probs = exp / exp.sum()
 
     probabilities = {disease: round(float(prob), 4) for disease, prob in zip(DISEASES, probs)}
+    probabilities = _apply_confidence_floor(probabilities)
     predicted_class = max(probabilities, key=probabilities.get)
     confidence = probabilities[predicted_class]
     uncertainty_score = round(1.0 - confidence, 4)
