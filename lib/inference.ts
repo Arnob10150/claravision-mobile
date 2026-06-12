@@ -7,8 +7,7 @@
 
 export type DiseaseClass =
   | 'Diabetic Retinopathy' | 'Media Hazy' | 'Myopic Retinopathy'
-  | 'Optic Disc Disorder'  | 'Cataract'   | 'Glaucoma'
-  | 'Retinal Vein Occlusion' | 'Hypertensive Retinopathy' | 'Normal'
+  | 'Optic Disc Disorder' | 'Normal'
 
 export type UncertaintyLevel = 'low' | 'medium' | 'high'
 
@@ -33,8 +32,7 @@ export interface InferenceResult {
 }
 
 const DISEASES: DiseaseClass[] = [
-  'Diabetic Retinopathy','Media Hazy','Myopic Retinopathy','Optic Disc Disorder',
-  'Cataract','Glaucoma','Retinal Vein Occlusion','Hypertensive Retinopathy','Normal',
+  'Diabetic Retinopathy','Media Hazy','Myopic Retinopathy','Optic Disc Disorder','Normal',
 ]
 
 const CONCEPT_DESCRIPTIONS: Record<string, string> = {

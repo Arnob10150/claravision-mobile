@@ -6,7 +6,7 @@ AI-powered fundus image analysis app built with Expo / React Native. Captures or
 
 - **Fundus capture** — use the device camera or pick from the gallery (left / right eye labelled)
 - **AI inference** — ResNet-50 feature extraction → ClaraVision-XAI classifier → Grad-CAM saliency
-- **9 disease classes** — Diabetic Retinopathy, Glaucoma, Cataract, Myopic Retinopathy, Optic Disc Disorder, Retinal Vein Occlusion, Hypertensive Retinopathy, Media Hazy, Normal
+- **5 disease classes** — Diabetic Retinopathy, Media Hazy, Myopic Retinopathy, Optic Disc Disorder, Normal
 - **Uncertainty badges** — low / medium / high calibrated confidence
 - **Differential diagnosis** — ranked differentials with ruled-out reasoning
 - **Patient queue & history** — Supabase-backed patient management

@@ -76,10 +76,6 @@ def _disease_scores(features: dict[str, float], scaled: dict[str, float]) -> dic
         "Media Hazy": 1.4 * (1 - scaled["contrast"]) + 1.0 * (1 - scaled["edges"]) + 0.6 * (1 - scaled["saturation"]),
         "Myopic Retinopathy": 1.2 * scaled["edges"] + 0.6 * scaled["brightness"] - 0.4 * scaled["redness"],
         "Optic Disc Disorder": 1.4 * bright + 0.5 * scaled["edges"],
-        "Cataract": 1.0 * (1 - scaled["saturation"]) + 0.8 * scaled["yellow"] + 0.6 * (1 - scaled["edges"]),
-        "Glaucoma": 1.0 * bright + 0.4 * (1 - scaled["edges"]),
-        "Retinal Vein Occlusion": 1.4 * scaled["redness"] + 1.0 * dark,
-        "Hypertensive Retinopathy": 0.8 * scaled["redness"] + 0.8 * scaled["edges"],
         "Normal": (
             1.2 * scaled["contrast"] + 0.8 * scaled["saturation"] + 0.6 * scaled["edges"]
             - 1.0 * dark - 1.0 * bright - 0.6 * max(0.0, scaled["redness"] - 0.5)
@@ -110,22 +106,6 @@ def _signals_for(predicted: str, features: dict[str, float], scaled: dict[str, f
         "Optic Disc Disorder": [
             ("cup-to-disc ratio change", bright, f"A bright, high-contrast region covers {bright * 100:.1f}% of the image, consistent with optic disc changes."),
             ("disc swelling", scaled["edges"], "Sharp local contrast near the disc region is consistent with disc margin changes."),
-        ],
-        "Cataract": [
-            ("lens opacity", 1 - scaled["saturation"], "Low color saturation is consistent with lens opacity."),
-            ("media opacity", scaled["yellow"], "A yellow-brown colour cast is consistent with cataract."),
-        ],
-        "Glaucoma": [
-            ("cup-to-disc ratio change", bright, f"A bright optic-disc-like region covers {bright * 100:.1f}% of the image."),
-            ("rim thinning", 1 - scaled["edges"], "Reduced peripapillary detail is consistent with neuroretinal rim thinning."),
-        ],
-        "Retinal Vein Occlusion": [
-            ("venous dilation", scaled["redness"], "Elevated red-channel intensity is consistent with venous congestion."),
-            ("flame hemorrhages", dark, f"Dark microregions cover {dark * 100:.1f}% of the image, consistent with flame hemorrhages."),
-        ],
-        "Hypertensive Retinopathy": [
-            ("arteriovenous nicking", scaled["edges"], "Fine vessel-edge texture is consistent with arteriovenous nicking."),
-            ("flame hemorrhages", scaled["redness"], "Elevated red-channel intensity is consistent with flame hemorrhages."),
         ],
         "Normal": [
             ("clear optic disc", scaled["contrast"], "Image contrast and vessel detail fall within typical limits."),

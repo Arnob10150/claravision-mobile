@@ -53,59 +53,6 @@ export const CLINICAL_GUIDANCE: Partial<Record<DiseaseClass, ClinicalGuidance>> 
     priorityByStage:      { 'Mild NPDR': 'monitor', 'Moderate NPDR': 'routine', 'Severe NPDR': 'soon', 'PDR': 'urgent' },
   },
 
-  'Glaucoma': {
-    overview: 'Glaucoma is a progressive optic neuropathy characterised by structural damage to the optic nerve and corresponding visual field loss. Primary open-angle glaucoma (POAG) is the most common form.',
-    specialistType: 'Glaucoma Specialist',
-    stages: [
-      { grade: 'Suspect',   shortLabel: 'Suspect',  icd10: 'H40.009', description: 'Elevated IOP, suspicious disc, or visual field defect — insufficient for definitive diagnosis',  prevalence: 'Large at-risk population' },
-      { grade: 'Early',     shortLabel: 'Early',    icd10: 'H40.1110', description: 'MD > −6 dB, C/D ≤ 0.7, mild RNFL thinning; visual field defect not threatening fixation',       prevalence: '~50% of glaucoma diagnoses' },
-      { grade: 'Moderate',  shortLabel: 'Moderate', icd10: 'H40.1120', description: 'MD −6 to −12 dB, C/D 0.7–0.9; arcuate scotoma present but fixation not threatened',             prevalence: '~30% of glaucoma cases' },
-      { grade: 'Advanced',  shortLabel: 'Advanced', icd10: 'H40.1130', description: 'MD worse than −12 dB, C/D ≥ 0.9; central island or temporal island only; fixation threatened',   prevalence: '~20% of glaucoma cases; high risk of blindness' },
-    ],
-    treatmentByStage: {
-      'Suspect':  ['Baseline IOP measurement (GAT)', 'Pachymetry (CCT)', 'Humphrey Visual Field (24-2)', 'OCT RNFL baseline', 'Lifestyle: exercise, avoid head-down positions'],
-      'Early':    ['Topical prostaglandin analogue (first-line: latanoprost QHS)', 'Target IOP 20–30% reduction from baseline', 'HVF every 6 months until stable', 'OCT RNFL annually'],
-      'Moderate': ['Combination topical therapy (PGA + beta-blocker or CAI)', 'Consider SLT (selective laser trabeculoplasty)', 'HVF every 6 months', 'Low vision referral if needed'],
-      'Advanced': ['Maximal medical therapy and/or filtering surgery (trabeculectomy / MIGS)', 'Urgent IOP reduction target < 12 mmHg', 'HVF every 3–6 months', 'Visual rehabilitation referral'],
-    },
-    followUpWeeksByStage: { 'Suspect': 26, 'Early': 26, 'Moderate': 13, 'Advanced': 6 },
-    priorityByStage:      { 'Suspect': 'monitor', 'Early': 'routine', 'Moderate': 'routine', 'Advanced': 'soon' },
-  },
-
-  'Retinal Vein Occlusion': {
-    overview: 'Retinal vein occlusion (RVO) is the second most common retinal vascular disease after diabetic retinopathy. Branch RVO (BRVO) is more common than central RVO (CRVO).',
-    specialistType: 'Medical Retina Specialist',
-    stages: [
-      { grade: 'Non-ischaemic RVO', shortLabel: 'Non-isch.', icd10: 'H34.819', description: 'Good visual acuity; < 10 disc areas of retinal non-perfusion on FFA', prevalence: '~75% of RVO cases' },
-      { grade: 'Ischaemic RVO',    shortLabel: 'Ischaemic', icd10: 'H34.819', description: 'VA < 6/60; > 10 disc areas of non-perfusion; risk of NVA/NVD',      prevalence: '~25%; high risk of neovascular glaucoma' },
-    ],
-    treatmentByStage: {
-      'Non-ischaemic RVO': ['Anti-VEGF injections (ranibizumab/aflibercept) for macular oedema', 'OCT macula monthly during treatment', 'Cardiovascular risk factor control', 'FFA to assess non-perfusion'],
-      'Ischaemic RVO':     ['URGENT referral — monitor for rubeosis iridis and neovascular glaucoma', 'Anti-VEGF monthly', 'Panretinal photocoagulation if NV develops', 'Close IOP monitoring (every 2–4 weeks)'],
-    },
-    followUpWeeksByStage: { 'Non-ischaemic RVO': 4, 'Ischaemic RVO': 2 },
-    priorityByStage:      { 'Non-ischaemic RVO': 'soon', 'Ischaemic RVO': 'urgent' },
-  },
-
-  'Hypertensive Retinopathy': {
-    overview: 'Hypertensive retinopathy reflects chronic systemic hypertension effects on retinal vasculature. Graded by the Keith-Wagener-Barker (KWB) classification.',
-    specialistType: 'Ophthalmologist + Cardiologist/Physician',
-    stages: [
-      { grade: 'Grade 1 KWB', shortLabel: 'Grade 1', icd10: 'H35.039', description: 'Mild generalised arteriolar constriction; A/V ratio 1:2 to 2:3',                            prevalence: 'Common in controlled hypertension' },
-      { grade: 'Grade 2 KWB', shortLabel: 'Grade 2', icd10: 'H35.039', description: 'Moderate arteriolar sclerosis; AV nicking; copper/silver wiring; A/V ratio < 1:2',         prevalence: 'Indicates chronic, moderately controlled HTN' },
-      { grade: 'Grade 3 KWB', shortLabel: 'Grade 3', icd10: 'H35.039', description: 'Flame haemorrhages, cotton wool spots, hard exudates; indicates end-organ damage',         prevalence: 'Urgent — systemic investigation required' },
-      { grade: 'Grade 4 KWB', shortLabel: 'Grade 4', icd10: 'H35.039', description: 'Grade 3 + papilloedema; indicates accelerated/malignant hypertension (BP > 180/120)',      prevalence: 'Hypertensive emergency — immediate admission' },
-    ],
-    treatmentByStage: {
-      'Grade 1 KWB': ['Optimise antihypertensive therapy (target < 130/80 mmHg)', 'Annual ophthalmic review', 'Salt restriction and lifestyle modification'],
-      'Grade 2 KWB': ['Intensify antihypertensive therapy', '6-monthly ophthalmic review', 'Cardiovascular risk stratification (ECG, renal function)'],
-      'Grade 3 KWB': ['Urgent physician/cardiologist referral within 24–48 hours', 'Aim for 20–25% BP reduction over 24 hours (avoid precipitous drop)', 'Ophthalmic follow-up in 2–4 weeks'],
-      'Grade 4 KWB': ['HYPERTENSIVE EMERGENCY — immediate hospital admission', 'IV antihypertensive (labetalol, nicardipine) under close monitoring', 'Ophthalmic and renal/cardiology co-management'],
-    },
-    followUpWeeksByStage: { 'Grade 1 KWB': 52, 'Grade 2 KWB': 26, 'Grade 3 KWB': 2, 'Grade 4 KWB': 0 },
-    priorityByStage:      { 'Grade 1 KWB': 'monitor', 'Grade 2 KWB': 'routine', 'Grade 3 KWB': 'urgent', 'Grade 4 KWB': 'urgent' },
-  },
-
   'Myopic Retinopathy': {
     overview: 'Pathological myopia (PM) is defined as axial length > 26 mm or refraction worse than −6.0D with structural myopic maculopathy. It is the leading cause of blindness in East Asia.',
     specialistType: 'Medical Retina / Vitreoretinal Specialist',
@@ -123,23 +70,6 @@ export const CLINICAL_GUIDANCE: Partial<Record<DiseaseClass, ClinicalGuidance>> 
     },
     followUpWeeksByStage: { 'Tessellated Fundus': 52, 'Diffuse Atrophy': 26, 'Patchy Atrophy': 13, 'Macular Atrophy': 13 },
     priorityByStage:      { 'Tessellated Fundus': 'monitor', 'Diffuse Atrophy': 'routine', 'Patchy Atrophy': 'routine', 'Macular Atrophy': 'soon' },
-  },
-
-  'Cataract': {
-    overview: 'Cataract is opacification of the crystalline lens. Age-related cataract is the commonest cause of reversible blindness worldwide. Graded by the LOCS III system.',
-    specialistType: 'Cataract Surgeon / Anterior Segment Specialist',
-    stages: [
-      { grade: 'Mild (LOCS I–II)',    shortLabel: 'Mild',     icd10: 'H26.9', description: 'Mild opacity; BCVA ≥ 6/9; no functional impairment',                              prevalence: 'Very common in > 60s' },
-      { grade: 'Moderate (LOCS III)', shortLabel: 'Moderate', icd10: 'H26.9', description: 'Moderate opacity; BCVA 6/12–6/18; functional impairment in bright/dim conditions', prevalence: 'Surgical candidacy zone' },
-      { grade: 'Dense (LOCS IV)',     shortLabel: 'Dense',    icd10: 'H26.9', description: 'Dense nuclear sclerosis or mature/hypermature cataract; BCVA < 6/18',             prevalence: 'Significant visual disability; surgical priority' },
-    ],
-    treatmentByStage: {
-      'Mild (LOCS I–II)':    ['Annual review with BCVA and fundus assessment', 'Updated spectacle prescription', 'Advise on glare management (anti-reflection coatings)', 'Reassure and monitor'],
-      'Moderate (LOCS III)': ['Discuss phacoemulsification with IOL implantation', 'Pre-op biometry (IOL Master / Lenstar)', 'Anaesthesia assessment if systemic co-morbidity', 'Driving licence implications (DVLA standard)'],
-      'Dense (LOCS IV)':     ['Surgical priority — phacoemulsification or ECCE if hypermature', 'Pre-op B-scan USS to assess posterior segment (media too opaque)', 'Consent for guarded prognosis if retinal co-pathology suspected', 'Post-op amblyopia treatment if unilateral dense cataract in child'],
-    },
-    followUpWeeksByStage: { 'Mild (LOCS I–II)': 52, 'Moderate (LOCS III)': 26, 'Dense (LOCS IV)': 8 },
-    priorityByStage:      { 'Mild (LOCS I–II)': 'monitor', 'Moderate (LOCS III)': 'routine', 'Dense (LOCS IV)': 'soon' },
   },
 
   'Optic Disc Disorder': {
@@ -212,16 +142,6 @@ export function deriveStage(
     else if (conceptStr.includes('irma') || confidence < 0.78)    stageIdx = 2        // Severe NPDR
     else if (conceptStr.includes('exudate') && conceptStr.includes('haem')) stageIdx = 1 // Moderate
     else stageIdx = 0                                                                  // Mild
-  } else if (disease === 'Glaucoma') {
-    if (confidence > 0.90) stageIdx = 2       // Advanced
-    else if (confidence > 0.78) stageIdx = 1  // Moderate
-    else if (confidence > 0.62) stageIdx = 0  // Early
-    else stageIdx = 0                          // Suspect
-  } else if (disease === 'Hypertensive Retinopathy') {
-    if (conceptStr.includes('papilloedema') || confidence > 0.92) stageIdx = 3   // Grade 4
-    else if (conceptStr.includes('cotton wool') || confidence > 0.82) stageIdx = 2 // Grade 3
-    else if (conceptStr.includes('nicking') || confidence > 0.70) stageIdx = 1    // Grade 2
-    else stageIdx = 0                                                               // Grade 1
   } else if (disease === 'Media Hazy') {
     if (confidence > 0.85) stageIdx = 2       // Dense
     else if (confidence > 0.70) stageIdx = 1  // Moderate
@@ -256,29 +176,10 @@ export const GRAD_CAM_REGIONS_BY_DISEASE: Record<DiseaseClass, GradCamRegion[]> 
     { id: 'nas', label: 'Nasal Quadrant',    cx: 32, cy: 48, radius: 9,  color: '#f97316', significance: 'Medium', clinicalNote: 'Nasal quadrant neovascularisation (NVE) indicates progression toward proliferative DR.' },
     { id: 'odc', label: 'Optic Disc',        cx: 28, cy: 50, radius: 8,  color: '#eab308', significance: 'Medium', clinicalNote: 'NVD (neovascularisation of the disc) is the most sight-threatening sign in PDR — defines PDR if present.' },
   ],
-  'Glaucoma': [
-    { id: 'odc', label: 'Optic Disc / Cup',  cx: 28, cy: 50, radius: 14, color: '#3b82f6', significance: 'High', clinicalNote: 'Vertical C/D ratio > 0.7 with inferior notching. ISNT rule violation indicates early rim loss. NRR tissue at inferior pole most vulnerable.' },
-    { id: 'inf', label: 'Inferior Arcuate',  cx: 48, cy: 72, radius: 10, color: '#6366f1', significance: 'High', clinicalNote: 'Inferior RNFL layer most commonly affected first in POAG. Superior HVF arcuate scotoma corresponds to inferior RNFL thinning.' },
-    { id: 'sup', label: 'Superior Arcuate',  cx: 48, cy: 28, radius: 9,  color: '#8b5cf6', significance: 'Medium', clinicalNote: 'Superior RNFL thinning causes inferior nasal step on Humphrey VF. Double arcuate defect indicates more advanced disease.' },
-    { id: 'peripap', label: 'Peripapillary', cx: 32, cy: 50, radius: 7,  color: '#a855f7', significance: 'Medium', clinicalNote: 'Beta-zone peripapillary atrophy extending temporally is a risk factor for glaucoma progression.' },
-  ],
-  'Retinal Vein Occlusion': [
-    { id: 'odc', label: 'Disc Oedema',       cx: 28, cy: 50, radius: 10, color: '#ef4444', significance: 'High', clinicalNote: 'Disc oedema in CRVO. Dilated, tortuous veins extending from disc in all four quadrants distinguishes CRVO from BRVO.' },
-    { id: 'mac', label: 'Macular Oedema',    cx: 50, cy: 50, radius: 12, color: '#f97316', significance: 'High', clinicalNote: 'Macular oedema is the primary cause of vision loss in RVO. OCT confirms and quantifies — anti-VEGF indicated if present.' },
-    { id: 'seg', label: 'Sectoral Haem.',    cx: 62, cy: 38, radius: 14, color: '#dc2626', significance: 'High', clinicalNote: 'Flame haemorrhages in a segmental distribution in the territory of the occluded branch vein (typically superotemporal quadrant).' },
-  ],
-  'Hypertensive Retinopathy': [
-    { id: 'av',  label: 'AV Crossings',      cx: 40, cy: 42, radius: 9,  color: '#f97316', significance: 'High', clinicalNote: 'Arteriovenous nicking at crossing sites where the thickened arteriole compresses the underlying venule in their shared adventitial sheath.' },
-    { id: 'art', label: 'Arteriolar Calibre',cx: 36, cy: 50, radius: 8,  color: '#eab308', significance: 'Medium', clinicalNote: 'Generalised arteriolar attenuation: A/V ratio < 2:3 indicates Grade 1+. Focal constriction indicates segmental autoregulatory failure.' },
-    { id: 'mac', label: 'Macular Star',      cx: 50, cy: 50, radius: 10, color: '#ef4444', significance: 'High', clinicalNote: 'Hard exudate star around the fovea (Henle fibre layer deposition) indicates Grade 3 HTN retinopathy — systemic emergency assessment required.' },
-  ],
   'Myopic Retinopathy': [
     { id: 'mac', label: 'Myopic Macula',     cx: 50, cy: 50, radius: 14, color: '#8b5cf6', significance: 'High', clinicalNote: 'Focal choroidal atrophy, lacquer crack, or myopic CNV at the foveal centre. Myopic CNV is smaller and more subtle than AMD-related CNV.' },
     { id: 'pap', label: 'Temporal Crescent', cx: 33, cy: 50, radius: 10, color: '#a855f7', significance: 'Medium', clinicalNote: 'Temporal (peripapillary) atrophic crescent indicating scleral stretching. Gamma-zone PPA beyond beta-zone is associated with PM.' },
     { id: 'lac', label: 'Lacquer Cracks',    cx: 54, cy: 44, radius: 7,  color: '#ec4899', significance: 'High', clinicalNote: 'Linear breaks in Bruch\'s membrane — high-risk site for myopic CNV development. Any sub-retinal fluid here requires urgent OCT.' },
-  ],
-  'Cataract': [
-    { id: 'lens', label: 'Lens Opacity Zone', cx: 50, cy: 50, radius: 18, color: '#64748b', significance: 'High', clinicalNote: 'Nuclear/cortical opacity attenuating the fundus image. PSC cataract (posterior subcapsular) causes disproportionate glare and near VA loss and is not well-shown on fundus photo.' },
   ],
   'Optic Disc Disorder': [
     { id: 'odc', label: 'Optic Disc Head',   cx: 28, cy: 50, radius: 14, color: '#ef4444', significance: 'High', clinicalNote: 'Pale, swollen, or drusenoid disc. Bilateral disc oedema with intact vessels = papilloedema until proven otherwise — EMERGENCY investigation.' },

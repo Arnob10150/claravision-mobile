@@ -12,10 +12,6 @@ DISEASES = [
     "Media Hazy",
     "Myopic Retinopathy",
     "Optic Disc Disorder",
-    "Cataract",
-    "Glaucoma",
-    "Retinal Vein Occlusion",
-    "Hypertensive Retinopathy",
     "Normal",
 ]
 

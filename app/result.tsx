@@ -314,7 +314,7 @@ export default function ResultScreen() {
           {/* Probabilities */}
           {activeTab === 'probs' && (
             <View>
-              <Text style={styles.tabDesc}>ClaraVision-XAI posterior probability across all 9 retinal pathology classes</Text>
+              <Text style={styles.tabDesc}>ClaraVision-XAI posterior probability across all 5 retinal pathology classes</Text>
               {sortedProbs.map(([disease, prob], i) => (
                 <ProbBar key={disease} label={disease} value={prob} isPrimary={disease === result.predicted_class} index={i}/>
               ))}

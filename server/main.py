@@ -22,17 +22,11 @@ CONCEPTS_BY_DISEASE = {
     "Media Hazy": ["reduced clarity", "hazy media", "low contrast"],
     "Myopic Retinopathy": ["tessellated fundus", "peripapillary atrophy", "posterior staphyloma"],
     "Optic Disc Disorder": ["disc swelling", "cup-to-disc ratio change", "pallor"],
-    "Cataract": ["lens opacity", "reduced fundus detail", "media opacity"],
-    "Glaucoma": ["increased cup-to-disc ratio", "rim thinning", "nerve fiber layer defect"],
-    "Retinal Vein Occlusion": ["flame hemorrhages", "venous dilation", "cotton wool spots"],
-    "Hypertensive Retinopathy": ["arteriovenous nicking", "copper wiring", "flame hemorrhages"],
     "Normal": ["clear optic disc", "normal vasculature", "no hemorrhages"],
 }
 
 REFERRAL_DISEASES = {
     "Diabetic Retinopathy",
-    "Glaucoma",
-    "Retinal Vein Occlusion",
     "Optic Disc Disorder",
 }
 
