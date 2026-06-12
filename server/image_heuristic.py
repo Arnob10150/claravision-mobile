@@ -19,7 +19,7 @@ _FEATURE_RANGES = {
     "brightness": (0.10, 0.90),
 }
 
-_TEMPERATURE = 0.07
+_TEMPERATURE = 2.5
 _MIN_CONFIDENCE = 0.90
 
 
@@ -81,31 +81,57 @@ def _scale_features(features: dict[str, float]) -> dict[str, float]:
     }
 
 
+_FEATURE_KEYS = ("brightness", "contrast", "saturation", "edge_density", "redness", "dark_fraction", "bright_fraction")
+
+# Standard deviation of each feature pooled across all FD3611 classes, used
+# to z-normalize features before computing distance to a class centroid.
+_POOLED_STD = {
+    "brightness": 0.0766,
+    "contrast": 0.0350,
+    "saturation": 0.1967,
+    "edge_density": 0.0151,
+    "redness": 0.4538,
+    "dark_fraction": 0.0182,
+    "bright_fraction": 0.0065,
+}
+
+# Mean feature vector per class, measured on a sample of the FD3611 dataset.
+_CENTROIDS = {
+    "Diabetic Retinopathy": {
+        "brightness": 0.3452, "contrast": 0.0917, "saturation": 0.8250,
+        "edge_density": 0.0473, "redness": 1.4342, "dark_fraction": 0.0171, "bright_fraction": 0.0016,
+    },
+    "Media Hazy": {
+        "brightness": 0.3718, "contrast": 0.0757, "saturation": 0.7478,
+        "edge_density": 0.0344, "redness": 1.2570, "dark_fraction": 0.0071, "bright_fraction": 0.0004,
+    },
+    "Myopic Retinopathy": {
+        "brightness": 0.3707, "contrast": 0.1001, "saturation": 0.7771,
+        "edge_density": 0.0523, "redness": 1.3599, "dark_fraction": 0.0153, "bright_fraction": 0.0039,
+    },
+    "Optic Disc Disorder": {
+        "brightness": 0.3268, "contrast": 0.1044, "saturation": 0.6101,
+        "edge_density": 0.0480, "redness": 1.1208, "dark_fraction": 0.0110, "bright_fraction": 0.0060,
+    },
+    "Normal": {
+        "brightness": 0.3877, "contrast": 0.1163, "saturation": 0.6611,
+        "edge_density": 0.0620, "redness": 1.0748, "dark_fraction": 0.0081, "bright_fraction": 0.0041,
+    },
+}
+
+
 def _disease_scores(features: dict[str, float], scaled: dict[str, float]) -> dict[str, float]:
-    dark = features["dark_fraction"]
-    bright = features["bright_fraction"]
-
-    # Center each scaled feature around 0 so a "neutral" image (mid-range
-    # contrast/edges/saturation/redness, no dark or bright lesions) scores
-    # ~0 for every class. Without this, the per-class weight totals differ
-    # enough that one class dominates the softmax regardless of the actual
-    # image content.
-    contrast = scaled["contrast"] - 0.5
-    edges = scaled["edges"] - 0.5
-    saturation = scaled["saturation"] - 0.5
-    redness = scaled["redness"] - 0.5
-    brightness = scaled["brightness"] - 0.5
-
-    return {
-        "Diabetic Retinopathy": 0.5 * redness + 2.0 * dark + 1.5 * bright,
-        "Media Hazy": -0.6 * contrast - 0.5 * edges - 0.3 * saturation,
-        "Myopic Retinopathy": 0.6 * edges + 0.3 * brightness - 0.3 * redness,
-        "Optic Disc Disorder": 1.5 * bright + 0.3 * edges,
-        "Normal": (
-            0.5 * contrast + 0.4 * saturation + 0.3 * edges
-            - 2.0 * dark - 2.0 * bright - 0.3 * max(0.0, redness)
-        ),
-    }
+    # Nearest-centroid classification: score each class by how close the
+    # image's (z-normalized) feature vector is to that class's average
+    # feature vector measured on the FD3611 dataset. Closer -> higher score.
+    scores = {}
+    for disease, centroid in _CENTROIDS.items():
+        distance = sum(
+            ((features[key] - centroid[key]) / _POOLED_STD[key]) ** 2
+            for key in _FEATURE_KEYS
+        )
+        scores[disease] = -distance
+    return scores
 
 
 # Per-disease signals used to explain a prediction: (concept name, [0, 1]
