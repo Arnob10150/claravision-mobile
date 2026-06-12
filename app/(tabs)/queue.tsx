@@ -7,7 +7,7 @@ import {
 import { AlertTriangle, AlertCircle, Clock, ChevronRight, CheckCircle } from 'lucide-react-native'
 import { UncertaintyBadge } from '../../components/UncertaintyBadge'
 import { Skeleton } from '../../components/Skeleton'
-import { getPendingReviewQueue } from '../../lib/localDb'
+import { supabase, isSupabaseReady } from '../../lib/supabase'
 import { C } from '../../lib/colors'
 
 function ago(iso: string) {
@@ -33,10 +33,20 @@ export default function QueueScreen() {
   async function loadData(refresh = false) {
     if (refresh) setRefreshing(true); else setLoading(true)
     try {
-      const data = await getPendingReviewQueue()
-      setItems(data.map(s => ({
+      if (!isSupabaseReady()) return
+
+      const { data, error } = await supabase
+        .from('scans')
+        .select('id,predicted_class,confidence,uncertainty_score,uncertainty_level,referral_flag,status,created_at,patients(patient_code)')
+        .eq('status', 'pending')
+        .in('uncertainty_level', ['high', 'medium'])
+        .order('uncertainty_score', { ascending: false })
+        .limit(100)
+      if (error) throw error
+
+      setItems((data ?? []).map((s: any) => ({
         id: s.id,
-        code: `SC-${s.id.replace(/[^A-Za-z0-9]/g,'').slice(0,6).toUpperCase()}`,
+        code: s.patients?.patient_code ?? `SC-${s.id.slice(0,6).toUpperCase()}`,
         diagnosis: s.predicted_class,
         confidence: s.confidence,
         uncScore: s.uncertainty_score ?? 0,

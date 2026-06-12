@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native'
 import { UncertaintyBadge } from '../../components/UncertaintyBadge'
 import { Skeleton } from '../../components/Skeleton'
-import { getDashboardStats, getRecentScans, getDiseaseDistribution } from '../../lib/localDb'
+import { supabase, isSupabaseReady } from '../../lib/supabase'
 import { C } from '../../lib/colors'
 
 function formatAgo(iso: string) {
@@ -85,30 +85,64 @@ export default function DashboardScreen() {
   async function loadData(refresh = false) {
     if (refresh) setRefreshing(true); else setLoading(true)
     try {
-      const [stats, recent, dist] = await Promise.all([
-        getDashboardStats(),
-        getRecentScans(6),
-        getDiseaseDistribution(),
+      if (!isSupabaseReady()) return
+
+      const today = new Date(); today.setHours(0, 0, 0, 0)
+      const todayISO = today.toISOString()
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
+      const weekAgoISO = weekAgo.toISOString()
+      const twoWeeksAgo = new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
+      const twoWeeksAgoISO = twoWeeksAgo.toISOString()
+
+      const [
+        totalRes, pendingRes, highUncRes, todayRes,
+        lastWeekTotalRes, lastWeekPendingRes, recentRes, allClassRes,
+      ] = await Promise.all([
+        supabase.from('scans').select('id', { count: 'exact', head: true }),
+        supabase.from('scans').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('scans').select('id', { count: 'exact', head: true }).eq('uncertainty_level', 'high'),
+        supabase.from('scans').select('id', { count: 'exact', head: true }).gte('created_at', todayISO),
+        supabase.from('scans').select('id', { count: 'exact', head: true })
+          .gte('created_at', twoWeeksAgoISO).lt('created_at', weekAgoISO),
+        supabase.from('scans').select('id', { count: 'exact', head: true })
+          .eq('status', 'pending').gte('created_at', twoWeeksAgoISO).lt('created_at', weekAgoISO),
+        supabase.from('scans')
+          .select('id,predicted_class,uncertainty_level,status,created_at,patients(patient_code)')
+          .order('created_at', { ascending: false })
+          .limit(6),
+        supabase.from('scans').select('predicted_class'),
       ])
 
-      setKpi(stats)
+      setKpi({
+        total:      totalRes.count ?? 0,
+        pending:    pendingRes.count ?? 0,
+        highUnc:    highUncRes.count ?? 0,
+        today:      todayRes.count ?? 0,
+        lastWTotal: lastWeekTotalRes.count ?? 0,
+        lastWPend:  lastWeekPendingRes.count ?? 0,
+      })
 
-      setScans(recent.map(s => ({
+      setScans((recentRes.data ?? []).map((s: any) => ({
         id: s.id,
-        code: s.code,
+        code: s.patients?.patient_code ?? `SC-${s.id.slice(0, 6).toUpperCase()}`,
         diagnosis: s.predicted_class,
         uncertainty: s.uncertainty_level,
         status: s.status,
         ago: formatAgo(s.created_at),
       })))
 
-      const total = dist.reduce((sum, d) => sum + d.count, 0) || 1
+      const counts: Record<string, number> = {}
+      ;(allClassRes.data ?? []).forEach((s: any) => { counts[s.predicted_class] = (counts[s.predicted_class] ?? 0) + 1 })
+      const total = (allClassRes.data ?? []).length || 1
       setDisease(
-        dist.slice(0,5).map((d,i) => ({
-          name: d.name.length>16 ? d.name.slice(0,14)+'…' : d.name,
-          pct:  Math.round(d.count/total*100),
-          color: C.chart[i % C.chart.length],
-        }))
+        Object.entries(counts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count], i) => ({
+            name: name.length > 16 ? name.slice(0, 14) + '…' : name,
+            pct:  Math.round(count / total * 100),
+            color: C.chart[i % C.chart.length],
+          }))
       )
     } catch(e) { console.error(e) }
     finally { setLoading(false); setRefreshing(false) }

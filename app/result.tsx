@@ -13,7 +13,7 @@ import {
 } from 'lucide-react-native'
 import { UncertaintyBadge } from '../components/UncertaintyBadge'
 import { Skeleton } from '../components/Skeleton'
-import { insertScan } from '../lib/localDb'
+import { supabase, isSupabaseReady } from '../lib/supabase'
 import { C } from '../lib/colors'
 import type { InferenceResult } from '../lib/inference'
 import { deriveStage, urgencyToText, type TreatmentPriority } from '../lib/clinical'
@@ -181,20 +181,52 @@ export default function ResultScreen() {
 
   async function saveToRecords() {
     if (!result) return
+    if (!isSupabaseReady()) {
+      Alert.alert('Supabase not configured', 'Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to enable saving.')
+      return
+    }
     setSaving(true)
     try {
-      await insertScan({
-        id: result.analysis_id,
-        predicted_class: result.predicted_class, confidence: result.confidence,
-        uncertainty_score: result.uncertainty_score, uncertainty_level: result.uncertainty_level,
-        all_probabilities: result.all_probabilities, referral_flag: result.referral_flag,
-        eye_side: params.eye || 'unknown', status: 'pending',
-        analysis_metadata: { analysis_id: result.analysis_id, processing_time_ms: result.processing_time_ms, concepts: result.activated_concepts, reasons: result.supporting_reasons },
-        created_at: new Date().toISOString(),
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not signed in. Please sign in to save scan results.')
+
+      const patientCode = `PT-${Date.now().toString(36).toUpperCase()}`
+      const { data: patient, error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          patient_code: patientCode,
+          gender: 'unknown',
+          created_by: session.user.id,
+        })
+        .select('id')
+        .single()
+      if (patientError) throw patientError
+
+      const { error } = await supabase.from('scans').insert({
+        patient_id: patient.id,
+        uploaded_by: session.user.id,
+        predicted_class: result.predicted_class,
+        confidence: result.confidence,
+        uncertainty_score: result.uncertainty_score,
+        uncertainty_level: result.uncertainty_level,
+        all_probabilities: result.all_probabilities,
+        referral_flag: result.referral_flag,
+        eye_side: params.eye || 'unknown',
+        status: 'pending',
+        analysis_metadata: {
+          analysis_id: result.analysis_id,
+          processing_time_ms: result.processing_time_ms,
+          concepts: result.activated_concepts,
+          reasons: result.supporting_reasons,
+          differential: result.differential,
+        },
       })
+      if (error) throw error
       setSaved(true)
-    } catch (e) { console.error(e) }
-    finally { setSaving(false) }
+    } catch (e) {
+      console.error(e)
+      Alert.alert('Failed to save scan', e instanceof Error ? e.message : 'Please try again.')
+    } finally { setSaving(false) }
   }
 
   async function generateReferralLetter() {

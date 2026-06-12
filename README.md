@@ -22,7 +22,7 @@ AI-powered fundus image analysis app built with Expo / React Native. Captures or
 | Icons | Lucide React Native |
 | Auth / DB | Supabase JS v2 |
 | Data fetching | TanStack Query v5 |
-| Inference | FastAPI service (local) via REST |
+| Inference | FastAPI service (Railway) via REST |
 | Language | TypeScript 5 |
 
 ## Project Structure
@@ -73,20 +73,14 @@ cp .env.example .env
 # Fill in your values:
 #   EXPO_PUBLIC_SUPABASE_URL
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY
-#   EXPO_PUBLIC_INFERENCE_API_URL   # http://<your-PC-LAN-IP>:8000
+#   EXPO_PUBLIC_INFERENCE_API_URL   # https://claravision-retina-ai-production.up.railway.app
 ```
 
-### Run the inference server (local)
+### Inference server (Railway)
 
-```bash
-cd server
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-Find your PC's LAN IP (`ipconfig` on Windows / `ifconfig` on macOS/Linux) and set
-`EXPO_PUBLIC_INFERENCE_API_URL=http://<that-ip>:8000` in `.env` so a phone or
-emulator on the same network can reach it.
+The app talks directly to the shared ClaraVision inference service deployed
+on Railway at `https://claravision-retina-ai-production.up.railway.app` via
+`EXPO_PUBLIC_INFERENCE_API_URL` — no local server needs to be running.
 
 ### Run the app
 
@@ -116,7 +110,7 @@ npm run typecheck
 |---|---|
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/publishable key |
-| `EXPO_PUBLIC_INFERENCE_API_URL` | FastAPI inference service base URL |
+| `EXPO_PUBLIC_INFERENCE_API_URL` | FastAPI inference service base URL (Railway deployment) |
 
 ## Inference API
 

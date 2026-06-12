@@ -1,9 +1,8 @@
 /**
  * ClaraVision mobile inference client.
  *
- * Set EXPO_PUBLIC_INFERENCE_API_URL to the FastAPI inference service URL.
- * For local development, run the server from server/main.py and point this
- * at your PC's LAN IP, e.g. http://192.168.1.130:8000
+ * Set EXPO_PUBLIC_INFERENCE_API_URL to the deployed Railway inference
+ * service URL, e.g. https://claravision-retina-ai-production.up.railway.app
  */
 
 export type DiseaseClass =
@@ -76,16 +75,6 @@ function inferenceBaseUrl() {
     throw new Error('EXPO_PUBLIC_INFERENCE_API_URL is required to run trained model inference.')
   }
   return url.replace(/\/$/, '')
-}
-
-function localApiHint(url: string) {
-  if (url.includes('10.0.2.2')) {
-    return ' The current URL only works from an Android emulator when the FastAPI model server is running on this PC.'
-  }
-  if (url.includes('127.0.0.1') || url.includes('localhost')) {
-    return ' Localhost points to the phone/emulator itself; use your PC LAN IP instead.'
-  }
-  return ''
 }
 
 function uploadNameFromUri(uri: string) {
@@ -180,8 +169,8 @@ export async function analyzeImageUri(uri: string): Promise<InferenceResult> {
     })
   } catch (error) {
     const message = error instanceof Error && error.name === 'AbortError'
-      ? `Inference request timed out after 30 seconds.${localApiHint(baseUrl)}`
-      : `Could not reach the inference server at ${baseUrl}.${localApiHint(baseUrl)}`
+      ? 'Inference request timed out after 30 seconds.'
+      : `Could not reach the inference server at ${baseUrl}.`
     throw new Error(message)
   } finally {
     clearTimeout(timeout)
