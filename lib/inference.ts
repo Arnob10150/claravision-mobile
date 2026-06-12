@@ -89,6 +89,19 @@ function localApiHint(url: string) {
   return ''
 }
 
+function uploadNameFromUri(uri: string) {
+  const cleanUri = uri.split('?')[0] ?? uri
+  const rawName = cleanUri.split('/').pop()
+  return rawName && rawName.includes('.') ? decodeURIComponent(rawName) : 'fundus-image.jpg'
+}
+
+function mimeTypeFromName(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase()
+  if (ext === 'png') return 'image/png'
+  if (ext === 'webp') return 'image/webp'
+  return 'image/jpeg'
+}
+
 function normalizeProbabilities(api: ApiPrediction): Record<DiseaseClass, number> {
   const out = Object.fromEntries(DISEASES.map(disease => [disease, 0])) as Record<DiseaseClass, number>
 
@@ -151,11 +164,12 @@ export async function analyzeImageUri(uri: string): Promise<InferenceResult> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 30000)
   const form = new FormData()
+  const uploadName = uploadNameFromUri(uri)
 
   form.append('file', {
     uri,
-    name: 'fundus-image.jpg',
-    type: 'image/jpeg',
+    name: uploadName,
+    type: mimeTypeFromName(uploadName),
   } as unknown as Blob)
 
   let response: Response

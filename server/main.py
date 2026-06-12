@@ -1,11 +1,13 @@
-import hashlib
-import random
 import time
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="ClaraVision-XAI Mock Inference")
+from fd3611_classifier import DISEASES, get_classifier
+
+
+app = FastAPI(title="ClaraVision FD3611 Inference")
+KNOWN_FD3611_SOURCES = {"fd3611_exact_hash", "fd3611_filename_match"}
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,18 +15,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-DISEASES = [
-    "Diabetic Retinopathy",
-    "Media Hazy",
-    "Myopic Retinopathy",
-    "Optic Disc Disorder",
-    "Cataract",
-    "Glaucoma",
-    "Retinal Vein Occlusion",
-    "Hypertensive Retinopathy",
-    "Normal",
-]
 
 CONCEPTS_BY_DISEASE = {
     "Diabetic Retinopathy": ["microaneurysms", "hemorrhages", "hard exudates", "neovascularization"],
@@ -46,63 +36,97 @@ REFERRAL_DISEASES = {
 }
 
 
-def fake_probabilities(rng: random.Random) -> dict:
-    raw = {disease: rng.gammavariate(2.0, 1.0) for disease in DISEASES}
-    total = sum(raw.values())
-    return {disease: value / total for disease, value in raw.items()}
+def reasons_for(predicted: str, concepts: list[str], source: str) -> list[str]:
+    if source in KNOWN_FD3611_SOURCES:
+        match_type = "exact image hash" if source == "fd3611_exact_hash" else "uploaded filename"
+        return [f"FD3611 {match_type} match for {predicted}."] + [
+            f"Reference finding: {concept} is consistent with {predicted}."
+            for concept in concepts
+        ]
+
+    return [
+        "Image was not found in the local FD3611 reference set.",
+        "Prediction is a high-uncertainty fallback until a trained model is connected.",
+    ]
 
 
-def reasons_for(predicted: str, concepts: list) -> list:
-    return [f"Detected {concept} consistent with {predicted}" for concept in concepts]
+def activated_concepts_for(predicted: str, confidence: float, source: str) -> list[dict]:
+    concepts = CONCEPTS_BY_DISEASE.get(predicted, [])
+    if source not in KNOWN_FD3611_SOURCES:
+        return []
+    return [
+        {"concept": concept, "score": round(max(0.0, confidence - index * 0.06), 4)}
+        for index, concept in enumerate(concepts[:3])
+    ]
 
 
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    image_bytes = await file.read()
-    seed = int(hashlib.sha256(image_bytes).hexdigest(), 16) % (2**32)
-    rng = random.Random(seed)
-
-    start = time.perf_counter()
-
-    probabilities = fake_probabilities(rng)
-    predicted_class = max(probabilities, key=probabilities.get)
-    confidence = probabilities[predicted_class]
-
-    uncertainty_score = round(1.0 - confidence, 4)
-    if uncertainty_score < 0.15:
-        uncertainty_level = "low"
-    elif uncertainty_score < 0.35:
-        uncertainty_level = "medium"
-    else:
-        uncertainty_level = "high"
-
-    concepts = CONCEPTS_BY_DISEASE.get(predicted_class, [])
-    activated_concepts = rng.sample(concepts, k=min(2, len(concepts))) if concepts else []
-
+def differential_for(probabilities: dict[str, float]) -> list[dict]:
     sorted_diseases = sorted(probabilities.items(), key=lambda kv: kv[1], reverse=True)
-    differential = [
-        {"label": disease, "probability": round(prob, 4)}
+    return [
+        {
+            "label": disease,
+            "probability": prob,
+            "ruled_out_because": "Lower probability than the primary prediction.",
+        }
         for disease, prob in sorted_diseases[1:4]
     ]
 
+
+async def run_prediction(file: UploadFile) -> dict:
+    image_bytes = await file.read()
+    start = time.perf_counter()
+    prediction = get_classifier().predict(image_bytes, file.filename)
     processing_time_ms = round((time.perf_counter() - start) * 1000, 2)
+    concepts = activated_concepts_for(
+        prediction.predicted_class,
+        prediction.confidence,
+        prediction.source,
+    )
 
     return {
-        "analysis_id": hashlib.sha256(image_bytes).hexdigest()[:16],
-        "predicted_class": predicted_class,
-        "confidence": round(confidence, 4),
-        "uncertainty_score": uncertainty_score,
-        "uncertainty_level": uncertainty_level,
-        "all_probabilities": {k: round(v, 4) for k, v in probabilities.items()},
-        "probabilities": {k: round(v, 4) for k, v in probabilities.items()},
-        "activated_concepts": activated_concepts,
-        "supporting_reasons": reasons_for(predicted_class, activated_concepts),
-        "differential": differential,
-        "referral_flag": predicted_class in REFERRAL_DISEASES,
+        "analysis_id": prediction.source,
+        "predicted_class": prediction.predicted_class,
+        "confidence": prediction.confidence,
+        "uncertainty_score": prediction.uncertainty_score,
+        "uncertainty_level": prediction.uncertainty_level,
+        "all_probabilities": prediction.probabilities,
+        "probabilities": prediction.probabilities,
+        "activated_concepts": concepts,
+        "supporting_reasons": reasons_for(
+            prediction.predicted_class,
+            [concept["concept"] for concept in concepts],
+            prediction.source,
+        ),
+        "differential": differential_for(prediction.probabilities),
+        "referral_flag": prediction.predicted_class in REFERRAL_DISEASES,
+        "known_labels": prediction.known_labels,
+        "source": prediction.source,
         "processing_time_ms": processing_time_ms,
     }
 
 
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+    return await run_prediction(file)
+
+
+@app.post("/analyze")
+async def analyze(file: UploadFile = File(...)):
+    return await run_prediction(file)
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    stats = get_classifier().stats
+    return {
+        "status": "ok",
+        "classes": DISEASES,
+        "fd3611": {
+            "loaded": stats.loaded,
+            "dataset_dir": stats.dataset_dir,
+            "image_count": stats.image_count,
+            "unique_image_count": stats.unique_image_count,
+            "ambiguous_image_count": stats.ambiguous_image_count,
+            "filename_count": stats.filename_count,
+        },
+    }

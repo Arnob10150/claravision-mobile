@@ -10,7 +10,8 @@
     "ios": "expo start --ios --port 8081",
     "web": "expo start --web --port 8081",
     "export:android": "expo export --platform android --max-workers 1 --no-bytecode",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:fd3611": "node scripts/test_fd3611_dataset.js"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
