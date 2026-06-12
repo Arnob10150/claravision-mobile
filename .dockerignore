@@ -1,0 +1,12 @@
+node_modules
+.expo
+.git
+android
+ios
+dist
+dist-web-check
+app
+components
+assets
+lib
+*.md
