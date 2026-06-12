@@ -19,7 +19,7 @@ _FEATURE_RANGES = {
     "brightness": (0.10, 0.90),
 }
 
-_TEMPERATURE = 0.35
+_TEMPERATURE = 0.2
 
 
 def _scaled(value: float, lo: float, hi: float) -> float:
@@ -146,7 +146,7 @@ def predict_from_image(image_bytes: bytes, digest: str) -> Prediction:
     # signal from the image content itself.
     rng = random.Random(int(digest[:16], 16))
     values = np.array(
-        [scores[disease] + rng.uniform(-0.02, 0.02) for disease in DISEASES],
+        [scores[disease] + rng.uniform(-0.01, 0.01) for disease in DISEASES],
         dtype=np.float64,
     )
     values -= values.max()
