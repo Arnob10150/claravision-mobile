@@ -48,7 +48,7 @@ const CONCEPT_DESCRIPTIONS: Record<string, string> = {
 }
 
 type ApiProbability = { label: string; probability: number }
-type ApiConcept = { concept?: string; name?: string; score?: number; confidence?: number; region?: string | null }
+type ApiConcept = { concept?: string; name?: string; score?: number; confidence?: number; region?: string | null } | string
 type ApiReason = { title?: string; text?: string } | string
 type ApiDifferential = {
   label?: string
@@ -63,7 +63,7 @@ type ApiPrediction = {
   confidence: number
   uncertainty_score: number
   uncertainty_level: UncertaintyLevel
-  probabilities?: ApiProbability[]
+  probabilities?: ApiProbability[] | Record<string, number>
   all_probabilities?: Record<string, number>
   activated_concepts?: ApiConcept[]
   supporting_reasons?: ApiReason[]
@@ -98,8 +98,14 @@ function normalizeProbabilities(api: ApiPrediction): Record<DiseaseClass, number
     }
   }
 
-  for (const item of api.probabilities ?? []) {
-    if (DISEASES.includes(item.label as DiseaseClass)) out[item.label as DiseaseClass] = Number(item.probability)
+  if (Array.isArray(api.probabilities)) {
+    for (const item of api.probabilities) {
+      if (DISEASES.includes(item.label as DiseaseClass)) out[item.label as DiseaseClass] = Number(item.probability)
+    }
+  } else if (api.probabilities) {
+    for (const [label, value] of Object.entries(api.probabilities)) {
+      if (DISEASES.includes(label as DiseaseClass)) out[label as DiseaseClass] = Number(value)
+    }
   }
 
   return out
@@ -113,6 +119,13 @@ function mapPrediction(api: ApiPrediction, startedAt: number): InferenceResult {
     uncertainty_level: api.uncertainty_level,
     all_probabilities: normalizeProbabilities(api),
     activated_concepts: (api.activated_concepts ?? []).map(item => {
+      if (typeof item === 'string') {
+        return {
+          name: item,
+          confidence: 0,
+          description: CONCEPT_DESCRIPTIONS[item] ?? 'Activated by the trained inference model.',
+        }
+      }
       const name = item.name ?? item.concept ?? 'Model concept'
       return {
         name,
