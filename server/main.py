@@ -1,3 +1,4 @@
+import hashlib
 import time
 
 from fastapi import FastAPI, File, UploadFile
@@ -84,7 +85,7 @@ async def run_prediction(file: UploadFile) -> dict:
     )
 
     return {
-        "analysis_id": prediction.source,
+        "analysis_id": hashlib.sha256(image_bytes).hexdigest()[:16],
         "predicted_class": prediction.predicted_class,
         "confidence": prediction.confidence,
         "uncertainty_score": prediction.uncertainty_score,

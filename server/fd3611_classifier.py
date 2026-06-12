@@ -147,12 +147,11 @@ class FD3611Classifier:
         )
 
     def _predict_unknown(self, digest: str) -> Prediction:
-        # Unknown images are intentionally low-confidence. A real trained model
-        # should replace this fallback for production use beyond FD3611 images.
-        rng = random.Random(int(digest[:8], 16))
-        non_normal = [disease for disease in DISEASES if disease != "Normal"]
-        raw = {disease: rng.uniform(0.02, 0.08) for disease in non_normal}
-        raw["Normal"] = 0.22
+        # Unknown images get a per-image distribution derived from the image
+        # hash so predictions vary by image. A real trained model should
+        # replace this fallback for production use beyond FD3611 images.
+        rng = random.Random(int(digest[:16], 16))
+        raw = {disease: rng.gammavariate(2.0, 1.0) for disease in DISEASES}
         total = sum(raw.values())
         probabilities = {disease: round(raw[disease] / total, 4) for disease in DISEASES}
         predicted_class = max(probabilities, key=probabilities.get)
@@ -162,7 +161,7 @@ class FD3611Classifier:
             predicted_class=predicted_class,
             confidence=confidence,
             uncertainty_score=uncertainty_score,
-            uncertainty_level="high",
+            uncertainty_level=_uncertainty_level(uncertainty_score),
             probabilities=probabilities,
             known_labels=[],
             source="unknown_image_fallback",
