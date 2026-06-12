@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
@@ -40,6 +39,8 @@ class Prediction:
     probabilities: dict[str, float]
     known_labels: list[str]
     source: str
+    reasons: list[str] = field(default_factory=list)
+    concepts: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -128,7 +129,7 @@ class FD3611Classifier:
             if labels:
                 return self._predict_known(labels, "fd3611_filename_match")
 
-        return self._predict_unknown(digest)
+        return self._predict_unknown(image_bytes, digest)
 
     def _predict_known(self, labels: set[str], source: str) -> Prediction:
         known_labels = [disease for disease in DISEASES if disease in labels]
@@ -146,26 +147,13 @@ class FD3611Classifier:
             source=source,
         )
 
-    def _predict_unknown(self, digest: str) -> Prediction:
-        # Unknown images get a per-image distribution derived from the image
-        # hash so predictions vary by image. A real trained model should
-        # replace this fallback for production use beyond FD3611 images.
-        rng = random.Random(int(digest[:16], 16))
-        raw = {disease: rng.gammavariate(2.0, 1.0) for disease in DISEASES}
-        total = sum(raw.values())
-        probabilities = {disease: round(raw[disease] / total, 4) for disease in DISEASES}
-        predicted_class = max(probabilities, key=probabilities.get)
-        confidence = probabilities[predicted_class]
-        uncertainty_score = round(1.0 - confidence, 4)
-        return Prediction(
-            predicted_class=predicted_class,
-            confidence=confidence,
-            uncertainty_score=uncertainty_score,
-            uncertainty_level=_uncertainty_level(uncertainty_score),
-            probabilities=probabilities,
-            known_labels=[],
-            source="unknown_image_fallback",
-        )
+    def _predict_unknown(self, image_bytes: bytes, digest: str) -> Prediction:
+        # Images not in the FD3611 reference set are analysed with a
+        # pixel-feature heuristic (color, contrast, edges) so the prediction
+        # reflects the actual image content rather than just its hash.
+        from image_heuristic import predict_from_image
+
+        return predict_from_image(image_bytes, digest)
 
     @staticmethod
     def _known_probabilities(known_labels: list[str]) -> dict[str, float]:

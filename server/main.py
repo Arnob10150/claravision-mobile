@@ -37,28 +37,26 @@ REFERRAL_DISEASES = {
 }
 
 
-def reasons_for(predicted: str, concepts: list[str], source: str) -> list[str]:
-    if source in KNOWN_FD3611_SOURCES:
-        match_type = "exact image hash" if source == "fd3611_exact_hash" else "uploaded filename"
-        return [f"FD3611 {match_type} match for {predicted}."] + [
-            f"Reference finding: {concept} is consistent with {predicted}."
+def reasons_for(prediction) -> list[str]:
+    if prediction.source in KNOWN_FD3611_SOURCES:
+        match_type = "exact image hash" if prediction.source == "fd3611_exact_hash" else "uploaded filename"
+        concepts = CONCEPTS_BY_DISEASE.get(prediction.predicted_class, [])[:3]
+        return [f"FD3611 {match_type} match for {prediction.predicted_class}."] + [
+            f"Reference finding: {concept} is consistent with {prediction.predicted_class}."
             for concept in concepts
         ]
 
-    return [
-        "Image was not found in the local FD3611 reference set.",
-        "Prediction is a high-uncertainty fallback until a trained model is connected.",
-    ]
+    return prediction.reasons or ["No distinguishing image features were detected; treat this result with caution."]
 
 
-def activated_concepts_for(predicted: str, confidence: float, source: str) -> list[dict]:
-    concepts = CONCEPTS_BY_DISEASE.get(predicted, [])
-    if source not in KNOWN_FD3611_SOURCES:
-        return []
-    return [
-        {"concept": concept, "score": round(max(0.0, confidence - index * 0.06), 4)}
-        for index, concept in enumerate(concepts[:3])
-    ]
+def activated_concepts_for(prediction) -> list[dict]:
+    if prediction.source in KNOWN_FD3611_SOURCES:
+        concepts = CONCEPTS_BY_DISEASE.get(prediction.predicted_class, [])
+        return [
+            {"concept": concept, "score": round(max(0.0, prediction.confidence - index * 0.06), 4)}
+            for index, concept in enumerate(concepts[:3])
+        ]
+    return prediction.concepts
 
 
 def differential_for(probabilities: dict[str, float]) -> list[dict]:
@@ -78,11 +76,6 @@ async def run_prediction(file: UploadFile) -> dict:
     start = time.perf_counter()
     prediction = get_classifier().predict(image_bytes, file.filename)
     processing_time_ms = round((time.perf_counter() - start) * 1000, 2)
-    concepts = activated_concepts_for(
-        prediction.predicted_class,
-        prediction.confidence,
-        prediction.source,
-    )
 
     return {
         "analysis_id": hashlib.sha256(image_bytes).hexdigest()[:16],
@@ -92,12 +85,8 @@ async def run_prediction(file: UploadFile) -> dict:
         "uncertainty_level": prediction.uncertainty_level,
         "all_probabilities": prediction.probabilities,
         "probabilities": prediction.probabilities,
-        "activated_concepts": concepts,
-        "supporting_reasons": reasons_for(
-            prediction.predicted_class,
-            [concept["concept"] for concept in concepts],
-            prediction.source,
-        ),
+        "activated_concepts": activated_concepts_for(prediction),
+        "supporting_reasons": reasons_for(prediction),
         "differential": differential_for(prediction.probabilities),
         "referral_flag": prediction.predicted_class in REFERRAL_DISEASES,
         "known_labels": prediction.known_labels,
