@@ -40,19 +40,32 @@ def extract_features(image_bytes: bytes) -> dict[str, float]:
     gray_arr = np.asarray(gray, dtype=np.float32) / 255.0
     edge_arr = np.asarray(edges, dtype=np.float32) / 255.0
 
-    mean_r = float(rgb_arr[..., 0].mean())
-    mean_g = float(rgb_arr[..., 1].mean())
-    mean_b = float(rgb_arr[..., 2].mean())
+    # Fundus photos are usually a circular crop on a black square background.
+    # Those border pixels are background, not tissue, so exclude them before
+    # computing brightness/contrast/dark-bright stats; otherwise every image
+    # gets the same artificial dark-fraction regardless of its content.
+    fg_mask = gray_arr > 0.05
+    if fg_mask.sum() < 0.1 * fg_mask.size:
+        fg_mask = np.ones_like(gray_arr, dtype=bool)
+
+    fg_rgb = rgb_arr[fg_mask]
+    fg_hsv = hsv_arr[fg_mask]
+    fg_gray = gray_arr[fg_mask]
+    fg_edges = edge_arr[fg_mask]
+
+    mean_r = float(fg_rgb[..., 0].mean())
+    mean_g = float(fg_rgb[..., 1].mean())
+    mean_b = float(fg_rgb[..., 2].mean())
 
     return {
-        "brightness": float(gray_arr.mean()),
-        "contrast": float(gray_arr.std()),
-        "saturation": float(hsv_arr[..., 1].mean()),
-        "edge_density": float(edge_arr.mean()),
+        "brightness": float(fg_gray.mean()),
+        "contrast": float(fg_gray.std()),
+        "saturation": float(fg_hsv[..., 1].mean()),
+        "edge_density": float(fg_edges.mean()),
         "redness": float(mean_r / (mean_g + mean_b + 1e-6)),
         "yellow_bias": max(0.0, (mean_r + mean_g) / 2.0 - mean_b),
-        "dark_fraction": float((gray_arr < 0.12).mean()),
-        "bright_fraction": float((gray_arr > 0.88).mean()),
+        "dark_fraction": float((fg_gray < 0.12).mean()),
+        "bright_fraction": float((fg_gray > 0.88).mean()),
     }
 
 
@@ -71,14 +84,25 @@ def _disease_scores(features: dict[str, float], scaled: dict[str, float]) -> dic
     dark = features["dark_fraction"]
     bright = features["bright_fraction"]
 
+    # Center each scaled feature around 0 so a "neutral" image (mid-range
+    # contrast/edges/saturation/redness, no dark or bright lesions) scores
+    # ~0 for every class. Without this, the per-class weight totals differ
+    # enough that one class dominates the softmax regardless of the actual
+    # image content.
+    contrast = scaled["contrast"] - 0.5
+    edges = scaled["edges"] - 0.5
+    saturation = scaled["saturation"] - 0.5
+    redness = scaled["redness"] - 0.5
+    brightness = scaled["brightness"] - 0.5
+
     return {
-        "Diabetic Retinopathy": 0.6 * scaled["redness"] + 1.2 * dark + 1.0 * bright,
-        "Media Hazy": 1.4 * (1 - scaled["contrast"]) + 1.0 * (1 - scaled["edges"]) + 0.6 * (1 - scaled["saturation"]),
-        "Myopic Retinopathy": 1.2 * scaled["edges"] + 0.6 * scaled["brightness"] - 0.4 * scaled["redness"],
-        "Optic Disc Disorder": 1.4 * bright + 0.5 * scaled["edges"],
+        "Diabetic Retinopathy": 0.5 * redness + 2.0 * dark + 1.5 * bright,
+        "Media Hazy": -0.6 * contrast - 0.5 * edges - 0.3 * saturation,
+        "Myopic Retinopathy": 0.6 * edges + 0.3 * brightness - 0.3 * redness,
+        "Optic Disc Disorder": 1.5 * bright + 0.3 * edges,
         "Normal": (
-            1.2 * scaled["contrast"] + 0.8 * scaled["saturation"] + 0.6 * scaled["edges"]
-            - 1.0 * dark - 1.0 * bright - 0.6 * max(0.0, scaled["redness"] - 0.5)
+            0.5 * contrast + 0.4 * saturation + 0.3 * edges
+            - 2.0 * dark - 2.0 * bright - 0.3 * max(0.0, redness)
         ),
     }
 
