@@ -113,6 +113,10 @@ export default function DashboardScreen() {
         supabase.from('scans').select('predicted_class'),
       ])
 
+      for (const res of [totalRes, pendingRes, highUncRes, todayRes, lastWeekTotalRes, lastWeekPendingRes, recentRes, allClassRes]) {
+        if (res.error) console.error('Dashboard query error:', res.error)
+      }
+
       setKpi({
         total:      totalRes.count ?? 0,
         pending:    pendingRes.count ?? 0,

@@ -13,9 +13,6 @@ import { Eye, EyeOff, ChevronRight, Shield, Brain, Activity } from 'lucide-react
 import { C } from '../lib/colors'
 import { isSupabaseReady, supabase } from '../lib/supabase'
 
-const ADMIN_EMAIL    = 'admin@gmail.com'
-const ADMIN_PASSWORD = 'admin'
-
 // ── Particle extracted as a proper component (fixes hooks-in-map bug) ──────
 function Particle({ left, top, delay, duration }: {
   left: string; top: string; delay: number; duration: number
@@ -70,9 +67,6 @@ export default function LoginScreen() {
     if (!email.trim() || !password) { setError('Please enter your email and password.'); return }
     setError(''); setLoading(true)
     try {
-      if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        router.replace('/(tabs)' as any); return
-      }
       if (!isSupabaseReady()) {
         setError('Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to apps/mobile/.env.')
         return
