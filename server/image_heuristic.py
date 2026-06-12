@@ -19,7 +19,7 @@ _FEATURE_RANGES = {
     "brightness": (0.10, 0.90),
 }
 
-_TEMPERATURE = 0.2
+_TEMPERATURE = 0.07
 
 
 def _scaled(value: float, lo: float, hi: float) -> float:
