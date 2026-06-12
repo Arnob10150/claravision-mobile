@@ -22,7 +22,7 @@ AI-powered fundus image analysis app built with Expo / React Native. Captures or
 | Icons | Lucide React Native |
 | Auth / DB | Supabase JS v2 |
 | Data fetching | TanStack Query v5 |
-| Inference | FastAPI service (Railway) via REST |
+| Inference | FastAPI service (local) via REST |
 | Language | TypeScript 5 |
 
 ## Project Structure
@@ -58,9 +58,9 @@ assets/
 ### Prerequisites
 
 - Node.js 18+
+- Python 3.10+
 - Expo CLI (`npm install -g expo-cli`)
 - A Supabase project
-- A deployed ClaraVision inference service (FastAPI on Railway or similar)
 
 ### Setup
 
@@ -73,10 +73,22 @@ cp .env.example .env
 # Fill in your values:
 #   EXPO_PUBLIC_SUPABASE_URL
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY
-#   EXPO_PUBLIC_INFERENCE_API_URL
+#   EXPO_PUBLIC_INFERENCE_API_URL   # http://<your-PC-LAN-IP>:8000
 ```
 
-### Run
+### Run the inference server (local)
+
+```bash
+cd server
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Find your PC's LAN IP (`ipconfig` on Windows / `ifconfig` on macOS/Linux) and set
+`EXPO_PUBLIC_INFERENCE_API_URL=http://<that-ip>:8000` in `.env` so a phone or
+emulator on the same network can reach it.
+
+### Run the app
 
 ```bash
 # Start Expo dev server
@@ -108,7 +120,7 @@ npm run typecheck
 
 ## Inference API
 
-The app POSTs a fundus image to `EXPO_PUBLIC_INFERENCE_API_URL/analyze` and expects a JSON response containing the predicted class, confidence, uncertainty level, Grad-CAM heatmap URL, differential diagnoses, and clinical reasoning text. See [lib/inference.ts](lib/inference.ts) for the full response type.
+The app POSTs a fundus image to `EXPO_PUBLIC_INFERENCE_API_URL/predict` and expects a JSON response containing the predicted class, confidence, uncertainty level, activated concepts, differential diagnoses, and supporting reasons across all 5 disease classes. See [server/main.py](server/main.py) for the FastAPI service and [lib/inference.ts](lib/inference.ts) for the full response type.
 
 ## License
 

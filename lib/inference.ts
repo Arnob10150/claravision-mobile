@@ -1,8 +1,9 @@
 /**
  * ClaraVision mobile inference client.
  *
- * Set EXPO_PUBLIC_INFERENCE_API_URL to your Railway FastAPI service URL.
- * Example: https://your-service.up.railway.app
+ * Set EXPO_PUBLIC_INFERENCE_API_URL to the FastAPI inference service URL.
+ * For local development, run the server from server/main.py and point this
+ * at your PC's LAN IP, e.g. http://192.168.1.130:8000
  */
 
 export type DiseaseClass =
@@ -82,7 +83,7 @@ function localApiHint(url: string) {
     return ' The current URL only works from an Android emulator when the FastAPI model server is running on this PC.'
   }
   if (url.includes('127.0.0.1') || url.includes('localhost')) {
-    return ' Localhost points to the phone/emulator itself; use your PC LAN IP or a deployed Railway URL.'
+    return ' Localhost points to the phone/emulator itself; use your PC LAN IP instead.'
   }
   return ''
 }
